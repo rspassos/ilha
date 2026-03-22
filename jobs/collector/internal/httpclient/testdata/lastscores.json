@@ -1,0 +1,130 @@
+[
+  {
+    "title": "2026-03-19 20:23 - duel: expert vs MatuzaH [aerowalk] 12:28",
+    "demo": "duel_expert_vs_matuzah[aerowalk]20260319-2013.mvd",
+    "timestamp": "2026-03-19 20:23",
+    "timestamp_iso": "2026-03-19T20:23:28-03:00",
+    "mode": "duel",
+    "participants": "expert vs MatuzaH",
+    "map": "aerowalk",
+    "scores": "12:28",
+    "players": [
+      {
+        "id": 0,
+        "name": "expert",
+        "name_color": "wwwwww",
+        "team": "red",
+        "team_color": "www",
+        "skin": "",
+        "colors": [4, 4],
+        "frags": 12,
+        "ping": 25,
+        "time": 0,
+        "cc": "",
+        "is_bot": false
+      },
+      {
+        "id": 0,
+        "name": "MatuzaH",
+        "name_color": "wwwwwww",
+        "team": "blue",
+        "team_color": "wwww",
+        "skin": "",
+        "colors": [13, 13],
+        "frags": 28,
+        "ping": 12,
+        "time": 0,
+        "cc": "",
+        "is_bot": false
+      }
+    ],
+    "teams": []
+  },
+  {
+    "title": "2026-03-19 20:48 - 2on2: red vs fk [dm4] 81:73",
+    "demo": "2on2_red_vs_fk[dm4]20260319-2038.mvd",
+    "timestamp": "2026-03-19 20:48",
+    "timestamp_iso": "2026-03-19T20:48:44-03:00",
+    "mode": "2on2",
+    "participants": "red vs fk",
+    "map": "dm4",
+    "scores": "81:73",
+    "players": [],
+    "teams": [
+      {
+        "name": "red",
+        "name_color": "www",
+        "frags": 81,
+        "ping": 18,
+        "colors": [4, 4],
+        "players": [
+          {
+            "id": 0,
+            "name": "MatuzaH",
+            "name_color": "wwwwwww",
+            "team": "red",
+            "team_color": "www",
+            "skin": "",
+            "colors": [13, 13],
+            "frags": 46,
+            "ping": 12,
+            "time": 0,
+            "cc": "",
+            "is_bot": false
+          },
+          {
+            "id": 0,
+            "name": "expert",
+            "name_color": "wwwwww",
+            "team": "red",
+            "team_color": "www",
+            "skin": "",
+            "colors": [4, 4],
+            "frags": 35,
+            "ping": 25,
+            "time": 0,
+            "cc": "",
+            "is_bot": false
+          }
+        ]
+      },
+      {
+        "name": "fk",
+        "name_color": "ww",
+        "frags": 73,
+        "ping": 19,
+        "colors": [4, 4],
+        "players": [
+          {
+            "id": 0,
+            "name": "sr.mihawk",
+            "name_color": "wwwwwwwww",
+            "team": "fk",
+            "team_color": "ww",
+            "skin": "",
+            "colors": [12, 13],
+            "frags": 45,
+            "ping": 12,
+            "time": 0,
+            "cc": "",
+            "is_bot": false
+          },
+          {
+            "id": 0,
+            "name": "sr.Gns",
+            "name_color": "wwwwww",
+            "team": "fk",
+            "team_color": "ww",
+            "skin": "",
+            "colors": [4, 4],
+            "frags": 28,
+            "ping": 26,
+            "time": 0,
+            "cc": "",
+            "is_bot": false
+          }
+        ]
+      }
+    ]
+  }
+]

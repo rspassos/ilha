@@ -1,0 +1,264 @@
+[
+  {
+    "version": 3,
+    "date": "2026-03-19 20:23:28 -0300",
+    "map": "aerowalk",
+    "hostname": "! Qlash Brasil | Antilag:28501",
+    "ip": "172.31.3.143",
+    "port": 28501,
+    "mode": "duel",
+    "tl": 10,
+    "fl": 0,
+    "dm": 3,
+    "tp": 0,
+    "duration": 600,
+    "demo": "duel_expert_vs_matuzah[aerowalk]20260319-2013.mvd",
+    "teams": null,
+    "players": [
+      {
+        "top-color": 4,
+        "bottom-color": 4,
+        "ping": 25,
+        "login": "",
+        "name": "expert",
+        "team": "red",
+        "stats": {
+          "frags": 12,
+          "deaths": 29,
+          "tk": 0,
+          "spawn-frags": 1,
+          "kills": 13,
+          "suicides": 1
+        },
+        "dmg": {
+          "taken": 8043,
+          "given": 6132,
+          "team": 0,
+          "self": 785,
+          "team-weapons": 0,
+          "enemy-weapons": 6013,
+          "taken-to-die": 277
+        },
+        "xferRL": 0,
+        "xferLG": 0,
+        "spree": {
+          "max": 3,
+          "quad": 0
+        },
+        "control": 53.728516,
+        "speed": {
+          "max": 1467.134888,
+          "avg": 329.705963
+        },
+        "weapons": {
+          "axe": {
+            "acc": {
+              "attacks": 0,
+              "hits": 0
+            }
+          }
+        },
+        "items": {
+          "ga": {
+            "took": 8,
+            "time": 73
+          }
+        },
+        "bot": {
+          "skill": 0,
+          "customised": false
+        }
+      },
+      {
+        "top-color": 13,
+        "bottom-color": 13,
+        "ping": 12,
+        "login": "",
+        "name": "MatuzaH",
+        "team": "blue",
+        "stats": {
+          "frags": 28,
+          "deaths": 13,
+          "tk": 0,
+          "spawn-frags": 2,
+          "kills": 28,
+          "suicides": 0
+        },
+        "dmg": {
+          "taken": 6132,
+          "given": 8043,
+          "team": 0,
+          "self": 724,
+          "team-weapons": 0,
+          "enemy-weapons": 7188,
+          "taken-to-die": 471
+        },
+        "xferRL": 0,
+        "xferLG": 0,
+        "spree": {
+          "max": 8,
+          "quad": 0
+        },
+        "control": 306.97998,
+        "speed": {
+          "max": 1123.297485,
+          "avg": 308.401245
+        },
+        "weapons": {
+          "rl": {
+            "kills": {
+              "total": 18
+            }
+          }
+        },
+        "items": {
+          "ra": {
+            "took": 13,
+            "time": 250
+          }
+        },
+        "bot": {
+          "skill": 0,
+          "customised": false
+        }
+      }
+    ]
+  },
+  {
+    "version": 3,
+    "date": "2026-03-19 20:48:44 -0300",
+    "map": "dm4",
+    "hostname": "! Qlash Brasil | Antilag:28501",
+    "ip": "172.31.3.143",
+    "port": 28501,
+    "mode": "team",
+    "tl": 10,
+    "fl": 0,
+    "dm": 3,
+    "tp": 2,
+    "duration": 600,
+    "demo": "2on2_red_vs_fk[dm4]20260319-2038.mvd",
+    "teams": [
+      "red",
+      "fk"
+    ],
+    "players": [
+      {
+        "top-color": 4,
+        "bottom-color": 4,
+        "ping": 25,
+        "login": "",
+        "name": "expert",
+        "team": "red",
+        "stats": {
+          "frags": 35,
+          "deaths": 51,
+          "tk": 1,
+          "spawn-frags": 8,
+          "kills": 40,
+          "suicides": 2
+        },
+        "dmg": {
+          "taken": 7621,
+          "given": 5784,
+          "team": 267,
+          "self": 870,
+          "team-weapons": 267,
+          "enemy-weapons": 4527,
+          "taken-to-die": 149
+        },
+        "xferRL": 7,
+        "xferLG": 6,
+        "spree": {
+          "max": 6,
+          "quad": 0
+        },
+        "control": 0,
+        "speed": {
+          "max": 966.558228,
+          "avg": 283.070129
+        },
+        "weapons": {
+          "sg": {
+            "acc": {
+              "attacks": 420,
+              "hits": 66
+            }
+          },
+          "rl": {
+            "kills": {
+              "total": 27,
+              "team": 0,
+              "enemy": 19,
+              "self": 1
+            }
+          }
+        },
+        "items": {
+          "ga": {
+            "took": 10,
+            "time": 95
+          }
+        },
+        "bot": {
+          "skill": 0,
+          "customised": false
+        }
+      },
+      {
+        "top-color": 13,
+        "bottom-color": 13,
+        "ping": 12,
+        "login": "",
+        "name": "MatuzaH",
+        "team": "red",
+        "stats": {
+          "frags": 46,
+          "deaths": 34,
+          "tk": 0,
+          "spawn-frags": 7,
+          "kills": 47,
+          "suicides": 1
+        },
+        "dmg": {
+          "taken": 5828,
+          "given": 7605,
+          "team": 100,
+          "self": 521,
+          "team-weapons": 100,
+          "enemy-weapons": 6500,
+          "taken-to-die": 171
+        },
+        "xferRL": 4,
+        "xferLG": 3,
+        "spree": {
+          "max": 7,
+          "quad": 0
+        },
+        "control": 12.3,
+        "speed": {
+          "max": 1100.4,
+          "avg": 300.2
+        },
+        "weapons": {
+          "lg": {
+            "acc": {
+              "attacks": 320,
+              "hits": 100
+            }
+          }
+        },
+        "items": {
+          "ra": {
+            "took": 12,
+            "time": 150
+          }
+        },
+        "bot": {
+          "skill": 0,
+          "customised": false
+        }
+      }
+    ]
+  }
+]

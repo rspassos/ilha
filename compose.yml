@@ -1,0 +1,55 @@
+services:
+  collector:
+    build:
+      context: .
+      dockerfile: jobs/collector/Dockerfile
+    container_name: ilha-collector
+    working_dir: /workspace/jobs/collector
+    command: ["sleep", "infinity"]
+    env_file:
+      - .env
+    environment:
+      APP_ENV: ${APP_ENV}
+      LOG_LEVEL: ${LOG_LEVEL}
+      METRICS_ADDR: ${METRICS_ADDR}
+      DATABASE_URL: ${DATABASE_URL}
+      HUBAPI_BASE_URL: ${HUBAPI_BASE_URL}
+    volumes:
+      - .:/workspace
+    depends_on:
+      mock-api:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+
+  mock-api:
+    image: nginx:1.27-alpine
+    container_name: ilha-mock-api
+    ports:
+      - "18080:80"
+    volumes:
+      - ./docs/responses:/usr/share/nginx/html:ro
+      - ./docs/mock-api/default.conf:/etc/nginx/conf.d/default.conf:ro
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: ilha-postgres
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:

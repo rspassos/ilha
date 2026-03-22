@@ -1,0 +1,11 @@
+servers:
+  - key: qlash-br-1
+    name: Qlash Brazil 1
+    address: qw.qlash.com.br:28501
+    enabled: true
+    timeout_seconds: 5
+  - key: qlash-br-2
+    name: Qlash Brazil 2
+    address: qw.qlash.com.br:28502
+    enabled: false
+    timeout_seconds: 10

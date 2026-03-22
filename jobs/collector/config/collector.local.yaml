@@ -1,0 +1,6 @@
+servers:
+  - key: local-fixture
+    name: Local Fixture Server
+    address: local-fixture
+    enabled: true
+    timeout_seconds: 5

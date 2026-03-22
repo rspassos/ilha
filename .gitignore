@@ -1,0 +1,8 @@
+.env
+.env.local
+.DS_Store
+
+jobs/collector/bin/
+jobs/collector/.cache/
+jobs/collector/.tmp/
+jobs/collector/collector
