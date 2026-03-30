@@ -127,6 +127,52 @@ func TestRepositoryUpsertMatchesIntegration(t *testing.T) {
 	if len(mergedPayload) == 0 {
 		t.Fatal("merged_payload is empty")
 	}
+
+	second := testMatchRecord(t)
+	second.DemoName = "demo-2.mvd"
+	second.MatchKey = "qlash-br-1:demo-2.mvd"
+	second.MapName = "ztndm3"
+	second.PlayedAt = second.PlayedAt.Add(time.Hour)
+	insertResult, err := repository.UpsertMatches(ctx, []model.MatchRecord{second})
+	if err != nil {
+		t.Fatalf("UpsertMatches() second insert error = %v", err)
+	}
+	if insertResult.Inserted != 1 || insertResult.Updated != 0 {
+		t.Fatalf("third UpsertMatches() result = %#v", insertResult)
+	}
+
+	rows, err := pool.Query(ctx, `SELECT id, demo_name FROM collector_matches ORDER BY id`)
+	if err != nil {
+		t.Fatalf("Query() ids error = %v", err)
+	}
+	defer rows.Close()
+
+	type row struct {
+		id       int64
+		demoName string
+	}
+
+	var persisted []row
+	for rows.Next() {
+		var current row
+		if err := rows.Scan(&current.id, &current.demoName); err != nil {
+			t.Fatalf("rows.Scan() error = %v", err)
+		}
+		persisted = append(persisted, current)
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatalf("rows.Err() error = %v", err)
+	}
+
+	if len(persisted) != 2 {
+		t.Fatalf("persisted rows = %d, want 2", len(persisted))
+	}
+	if persisted[0].id != 1 || persisted[0].demoName != "demo-1.mvd" {
+		t.Fatalf("first row = %#v, want id=1 demo-1.mvd", persisted[0])
+	}
+	if persisted[1].id != 2 || persisted[1].demoName != "demo-2.mvd" {
+		t.Fatalf("second row = %#v, want id=2 demo-2.mvd", persisted[1])
+	}
 }
 
 func testMatchRecord(t *testing.T) model.MatchRecord {

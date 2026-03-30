@@ -180,39 +180,57 @@ func nullInt(value int) any {
 }
 
 const upsertMatchSQL = `
-INSERT INTO collector_matches (
-	server_key,
-	server_name,
-	demo_name,
-	match_key,
-	mode,
-	map_name,
-	participants,
-	played_at,
-	duration_seconds,
-	hostname,
-	has_bots,
-	score_payload,
-	stats_payload,
-	merged_payload,
-	ingested_at,
-	updated_at
-) VALUES (
-	$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, $13::jsonb, $14::jsonb, $15, $16
+WITH lock_key AS (
+	SELECT pg_advisory_xact_lock(hashtextextended($1 || ':' || $3, 0))
+),
+updated AS (
+	UPDATE collector_matches
+	SET
+		server_name = $2,
+		match_key = $4,
+		mode = $5,
+		map_name = $6,
+		participants = $7,
+		played_at = $8,
+		duration_seconds = $9,
+		hostname = $10,
+		has_bots = $11,
+		score_payload = $12::jsonb,
+		stats_payload = $13::jsonb,
+		merged_payload = $14::jsonb,
+		updated_at = $16
+	WHERE server_key = $1
+	  AND demo_name = $3
+	  AND EXISTS (SELECT 1 FROM lock_key)
+	RETURNING false AS inserted
+),
+inserted AS (
+	INSERT INTO collector_matches (
+		server_key,
+		server_name,
+		demo_name,
+		match_key,
+		mode,
+		map_name,
+		participants,
+		played_at,
+		duration_seconds,
+		hostname,
+		has_bots,
+		score_payload,
+		stats_payload,
+		merged_payload,
+		ingested_at,
+		updated_at
+	)
+	SELECT
+		$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, $13::jsonb, $14::jsonb, $15, $16
+	WHERE EXISTS (SELECT 1 FROM lock_key)
+	  AND NOT EXISTS (SELECT 1 FROM updated)
+	RETURNING true AS inserted
 )
-ON CONFLICT (server_key, demo_name) DO UPDATE SET
-	server_name = EXCLUDED.server_name,
-	match_key = EXCLUDED.match_key,
-	mode = EXCLUDED.mode,
-	map_name = EXCLUDED.map_name,
-	participants = EXCLUDED.participants,
-	played_at = EXCLUDED.played_at,
-	duration_seconds = EXCLUDED.duration_seconds,
-	hostname = EXCLUDED.hostname,
-	has_bots = EXCLUDED.has_bots,
-	score_payload = EXCLUDED.score_payload,
-	stats_payload = EXCLUDED.stats_payload,
-	merged_payload = EXCLUDED.merged_payload,
-	updated_at = EXCLUDED.updated_at
-RETURNING (xmax = 0) AS inserted
+SELECT inserted FROM inserted
+UNION ALL
+SELECT inserted FROM updated
+LIMIT 1
 `

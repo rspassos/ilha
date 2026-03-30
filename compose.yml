@@ -22,6 +22,28 @@ services:
       postgres:
         condition: service_healthy
 
+  player-stats:
+    build:
+      context: .
+      dockerfile: jobs/player-stats/Dockerfile
+    container_name: ilha-player-stats
+    working_dir: /workspace/jobs/player-stats
+    command: ["sleep", "infinity"]
+    env_file:
+      - .env
+    environment:
+      APP_ENV: ${APP_ENV}
+      LOG_LEVEL: ${LOG_LEVEL}
+      DATABASE_URL: ${DATABASE_URL}
+      PLAYER_STATS_METRICS_ADDR: ${PLAYER_STATS_METRICS_ADDR:-:9091}
+      PLAYER_STATS_BATCH_SIZE: ${PLAYER_STATS_BATCH_SIZE:-100}
+      PLAYER_STATS_JOB_NAME: ${PLAYER_STATS_JOB_NAME:-player-stats}
+    volumes:
+      - .:/workspace
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   mock-api:
     image: nginx:1.27-alpine
     container_name: ilha-mock-api
