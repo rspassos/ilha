@@ -5,6 +5,11 @@
       "source": "affaan-m/everything-claude-code",
       "sourceType": "github",
       "computedHash": "67c25e95cec3f3166c2efefd5f4502863a1246c6f742b8cbcd2e2864d2a8182a"
+    },
+    "supabase-postgres-best-practices": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "computedHash": "9c87c315aed143ee3b34bec8117100f5035e0df09e6b23e1ecc772cff434c9ad"
     }
   }
 }
