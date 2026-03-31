@@ -44,6 +44,37 @@ services:
       postgres:
         condition: service_healthy
 
+  player-stats-api:
+    build:
+      context: .
+      dockerfile: services/player-stats-api/Dockerfile
+    container_name: ilha-player-stats-api
+    working_dir: /workspace/services/player-stats-api
+    command: ["go", "run", "./cmd/player-stats-api"]
+    env_file:
+      - .env
+    environment:
+      APP_ENV: ${APP_ENV}
+      LOG_LEVEL: ${LOG_LEVEL}
+      DATABASE_URL: ${DATABASE_URL}
+      PLAYER_STATS_API_HTTP_ADDR: ${PLAYER_STATS_API_HTTP_ADDR:-:8080}
+      PLAYER_STATS_API_METRICS_ADDR: ${PLAYER_STATS_API_METRICS_ADDR:-:9092}
+      PLAYER_STATS_API_DEFAULT_LIMIT: ${PLAYER_STATS_API_DEFAULT_LIMIT:-50}
+      PLAYER_STATS_API_MAX_LIMIT: ${PLAYER_STATS_API_MAX_LIMIT:-100}
+      PLAYER_STATS_API_MINIMUM_MATCHES: ${PLAYER_STATS_API_MINIMUM_MATCHES:-10}
+      PLAYER_STATS_API_READ_TIMEOUT: ${PLAYER_STATS_API_READ_TIMEOUT:-5s}
+      PLAYER_STATS_API_WRITE_TIMEOUT: ${PLAYER_STATS_API_WRITE_TIMEOUT:-10s}
+      PLAYER_STATS_API_IDLE_TIMEOUT: ${PLAYER_STATS_API_IDLE_TIMEOUT:-60s}
+      PLAYER_STATS_API_SHUTDOWN_TIMEOUT: ${PLAYER_STATS_API_SHUTDOWN_TIMEOUT:-5s}
+    ports:
+      - "8080:8080"
+      - "9092:9092"
+    volumes:
+      - .:/workspace
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   mock-api:
     image: nginx:1.27-alpine
     container_name: ilha-mock-api
