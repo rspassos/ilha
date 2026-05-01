@@ -1,0 +1,45 @@
+name: Deploy to Server
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/player-stats-api
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: services/player-stats-api/go.mod
+          cache-dependency-path: services/player-stats-api/go.sum
+
+      - name: Build player-stats-api binary
+        env:
+          GOOS: linux
+          GOARCH: amd64
+          CGO_ENABLED: 0
+        run: |
+          mkdir -p build
+          go build -trimpath -ldflags="-s -w" -o build/player-stats-api ./cmd/player-stats-api
+          chmod +x build/player-stats-api
+
+      - name: Deploy binary to server
+        working-directory: .
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          SERVER_DIR: ${{ secrets.SERVER_DIR }}
+        run: |
+          echo "$SSH_PRIVATE_KEY" > private_key
+          chmod 600 private_key
+          rsync -avz -e "ssh -i private_key -o StrictHostKeyChecking=no" ./services/player-stats-api/build/player-stats-api $SERVER_USER@$SERVER_IP:$SERVER_DIR/
+          rm private_key

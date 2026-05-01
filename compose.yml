@@ -75,6 +75,20 @@ services:
       postgres:
         condition: service_healthy
 
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    container_name: ilha-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./ops/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      player-stats-api:
+        condition: service_started
+
   mock-api:
     image: nginx:1.27-alpine
     container_name: ilha-mock-api

@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -20,7 +21,7 @@ const (
 	DefaultShutdownTimout = 5 * time.Second
 	DefaultLimit          = 50
 	DefaultMaxLimit       = 100
-	DefaultMinimumMatches = 10
+	DefaultMinimumMatches = 3
 )
 
 type Loader struct {
@@ -29,18 +30,21 @@ type Loader struct {
 }
 
 type AppConfig struct {
-	AppEnv          string
-	LogLevel        string
-	HTTPAddr        string
-	MetricsAddr     string
-	DatabaseURL     string
-	ReadTimeout     time.Duration
-	WriteTimeout    time.Duration
-	IdleTimeout     time.Duration
-	ShutdownTimeout time.Duration
-	DefaultLimit    int
-	MaxLimit        int
-	MinimumMatches  int
+	AppEnv             string
+	LogLevel           string
+	HTTPAddr           string
+	MetricsAddr        string
+	DatabaseURL        string
+	CORSAllowedOrigins []string
+	CORSAllowedMethods []string
+	CORSAllowedHeaders []string
+	ReadTimeout        time.Duration
+	WriteTimeout       time.Duration
+	IdleTimeout        time.Duration
+	ShutdownTimeout    time.Duration
+	DefaultLimit       int
+	MaxLimit           int
+	MinimumMatches     int
 }
 
 func NewLoader() Loader {
@@ -95,19 +99,23 @@ func (l Loader) Load(envFilePath string) (AppConfig, error) {
 	}
 
 	cfg := AppConfig{
-		AppEnv:          envOrDefault(l.lookupEnv, "APP_ENV", "development"),
-		LogLevel:        envOrDefault(l.lookupEnv, "LOG_LEVEL", "info"),
-		HTTPAddr:        envOrDefault(l.lookupEnv, "PLAYER_STATS_API_HTTP_ADDR", DefaultHTTPAddr),
-		MetricsAddr:     envOrDefault(l.lookupEnv, "PLAYER_STATS_API_METRICS_ADDR", DefaultMetricsAddr),
-		DatabaseURL:     strings.TrimSpace(envValue(l.lookupEnv, "DATABASE_URL")),
-		ReadTimeout:     readTimeout,
-		WriteTimeout:    writeTimeout,
-		IdleTimeout:     idleTimeout,
-		ShutdownTimeout: shutdownTimeout,
-		DefaultLimit:    defaultLimit,
-		MaxLimit:        maxLimit,
-		MinimumMatches:  minimumMatches,
+		AppEnv:             envOrDefault(l.lookupEnv, "APP_ENV", "development"),
+		LogLevel:           envOrDefault(l.lookupEnv, "LOG_LEVEL", "info"),
+		HTTPAddr:           envOrDefault(l.lookupEnv, "PLAYER_STATS_API_HTTP_ADDR", DefaultHTTPAddr),
+		MetricsAddr:        envOrDefault(l.lookupEnv, "PLAYER_STATS_API_METRICS_ADDR", DefaultMetricsAddr),
+		DatabaseURL:        strings.TrimSpace(envValue(l.lookupEnv, "DATABASE_URL")),
+		CORSAllowedOrigins: envCSVOrDefault(l.lookupEnv, "PLAYER_STATS_API_CORS_ALLOWED_ORIGINS", nil),
+		CORSAllowedMethods: envCSVOrDefault(l.lookupEnv, "PLAYER_STATS_API_CORS_ALLOWED_METHODS", nil),
+		CORSAllowedHeaders: envCSVOrDefault(l.lookupEnv, "PLAYER_STATS_API_CORS_ALLOWED_HEADERS", nil),
+		ReadTimeout:        readTimeout,
+		WriteTimeout:       writeTimeout,
+		IdleTimeout:        idleTimeout,
+		ShutdownTimeout:    shutdownTimeout,
+		DefaultLimit:       defaultLimit,
+		MaxLimit:           maxLimit,
+		MinimumMatches:     minimumMatches,
 	}
+	cfg.applyDevelopmentCORSDefaults()
 
 	if err := cfg.Validate(); err != nil {
 		return AppConfig{}, err
@@ -178,6 +186,28 @@ func (c AppConfig) Validate() error {
 	if strings.TrimSpace(c.MetricsAddr) == "" {
 		return errors.New("player_stats_api_metrics_addr must not be empty")
 	}
+	for _, origin := range c.CORSAllowedOrigins {
+		if origin == "*" {
+			continue
+		}
+		parsedOrigin, err := url.Parse(origin)
+		if err != nil {
+			return fmt.Errorf("parse cors origin %q: %w", origin, err)
+		}
+		if parsedOrigin.Scheme == "" || parsedOrigin.Host == "" {
+			return fmt.Errorf("cors origin %q must include scheme and host", origin)
+		}
+	}
+	for _, method := range c.CORSAllowedMethods {
+		if strings.TrimSpace(method) == "" {
+			return errors.New("player_stats_api_cors_allowed_methods must not contain empty values")
+		}
+	}
+	for _, header := range c.CORSAllowedHeaders {
+		if strings.TrimSpace(header) == "" {
+			return errors.New("player_stats_api_cors_allowed_headers must not contain empty values")
+		}
+	}
 	if c.ReadTimeout <= 0 {
 		return errors.New("player_stats_api_read_timeout must be greater than zero")
 	}
@@ -245,4 +275,57 @@ func envDurationOrDefault(lookupEnv func(string) (string, bool), key string, fal
 	}
 
 	return parsed, nil
+}
+
+func envCSVOrDefault(lookupEnv func(string) (string, bool), key string, fallback []string) []string {
+	value := strings.TrimSpace(envValue(lookupEnv, key))
+	if value == "" {
+		if fallback == nil {
+			return nil
+		}
+		return append([]string(nil), fallback...)
+	}
+
+	parts := strings.Split(value, ",")
+	values := make([]string, 0, len(parts))
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+		if trimmed == "" {
+			continue
+		}
+		values = append(values, trimmed)
+	}
+
+	return values
+}
+
+func (c *AppConfig) applyDevelopmentCORSDefaults() {
+	if !isDevelopmentEnv(c.AppEnv) {
+		if len(c.CORSAllowedMethods) == 0 {
+			c.CORSAllowedMethods = []string{http.MethodGet, http.MethodOptions}
+		}
+		if len(c.CORSAllowedHeaders) == 0 {
+			c.CORSAllowedHeaders = []string{"Content-Type"}
+		}
+		return
+	}
+
+	if len(c.CORSAllowedOrigins) == 0 {
+		c.CORSAllowedOrigins = []string{"*"}
+	}
+	if len(c.CORSAllowedMethods) == 0 {
+		c.CORSAllowedMethods = []string{"*"}
+	}
+	if len(c.CORSAllowedHeaders) == 0 {
+		c.CORSAllowedHeaders = []string{"*"}
+	}
+}
+
+func isDevelopmentEnv(appEnv string) bool {
+	switch strings.ToLower(strings.TrimSpace(appEnv)) {
+	case "development", "dev", "local":
+		return true
+	default:
+		return false
+	}
 }

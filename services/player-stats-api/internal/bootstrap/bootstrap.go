@@ -8,9 +8,9 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rspassos/ilha/services/player-stats-api/internal/config"
 	"github.com/rspassos/ilha/services/player-stats-api/internal/httpapi"
 	"github.com/rspassos/ilha/services/player-stats-api/internal/logging"
@@ -25,7 +25,7 @@ type App struct {
 	bootstrapOnly bool
 	logger        *logging.Logger
 	metrics       *metrics.Collector
-	pool          *pgxpool.Pool
+	pool          *storage.Pool
 	apiServer     *http.Server
 	apiListener   net.Listener
 	metricsServer *http.Server
@@ -53,7 +53,7 @@ func NewApp(ctx context.Context, options Options) (*App, error) {
 		return app, nil
 	}
 
-	pool, err := openPool(ctx, cfg.DatabaseURL)
+	pool, err := storage.Open(ctx, cfg.DatabaseURL)
 	if err != nil {
 		return nil, err
 	}
@@ -170,25 +170,6 @@ func (a *App) shutdown() error {
 	return shutdownErr
 }
 
-func openPool(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
-	cfg, err := pgxpool.ParseConfig(databaseURL)
-	if err != nil {
-		return nil, fmt.Errorf("parse database url: %w", err)
-	}
-
-	pool, err := pgxpool.NewWithConfig(ctx, cfg)
-	if err != nil {
-		return nil, fmt.Errorf("open postgres pool: %w", err)
-	}
-
-	if err := pool.Ping(ctx); err != nil {
-		pool.Close()
-		return nil, fmt.Errorf("ping postgres: %w", err)
-	}
-
-	return pool, nil
-}
-
 func newHTTPServer(cfg config.AppConfig, logger *logging.Logger, collector *metrics.Collector, rankingService service.RankingService) *http.Server {
 	mux := http.NewServeMux()
 	mux.Handle("/healthz", instrumentHandler(logger, collector, "/healthz", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -211,12 +192,90 @@ func newHTTPServer(cfg config.AppConfig, logger *logging.Logger, collector *metr
 	)))
 
 	return &http.Server{
-		Handler:           mux,
+		Handler:           withCORS(cfg, mux),
 		ReadTimeout:       cfg.ReadTimeout,
 		WriteTimeout:      cfg.WriteTimeout,
 		IdleTimeout:       cfg.IdleTimeout,
 		ReadHeaderTimeout: cfg.ReadTimeout,
 	}
+}
+
+func withCORS(cfg config.AppConfig, next http.Handler) http.Handler {
+	allowedOrigins := make(map[string]struct{}, len(cfg.CORSAllowedOrigins))
+	allowAnyOrigin := false
+	for _, origin := range cfg.CORSAllowedOrigins {
+		if origin == "*" {
+			allowAnyOrigin = true
+			continue
+		}
+		allowedOrigins[origin] = struct{}{}
+	}
+
+	allowedMethods := strings.Join(cfg.CORSAllowedMethods, ", ")
+	allowedHeaders := strings.Join(cfg.CORSAllowedHeaders, ", ")
+	allowAnyMethod := containsWildcard(cfg.CORSAllowedMethods)
+	allowAnyHeader := containsWildcard(cfg.CORSAllowedHeaders)
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		origin := strings.TrimSpace(r.Header.Get("Origin"))
+		if origin == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		allowedOrigin, ok := corsAllowedOrigin(origin, allowAnyOrigin, allowedOrigins)
+		if !ok {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		w.Header().Add("Vary", "Origin")
+		w.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
+		if allowAnyMethod {
+			requestMethod := strings.TrimSpace(r.Header.Get("Access-Control-Request-Method"))
+			if requestMethod != "" {
+				w.Header().Set("Access-Control-Allow-Methods", requestMethod)
+			}
+		} else if allowedMethods != "" {
+			w.Header().Set("Access-Control-Allow-Methods", allowedMethods)
+		}
+		if allowAnyHeader {
+			requestHeaders := strings.TrimSpace(r.Header.Get("Access-Control-Request-Headers"))
+			if requestHeaders != "" {
+				w.Header().Set("Access-Control-Allow-Headers", requestHeaders)
+			}
+		} else if allowedHeaders != "" {
+			w.Header().Set("Access-Control-Allow-Headers", allowedHeaders)
+		}
+
+		if r.Method == http.MethodOptions {
+			w.Header().Add("Vary", "Access-Control-Request-Method")
+			w.Header().Add("Vary", "Access-Control-Request-Headers")
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func containsWildcard(values []string) bool {
+	for _, value := range values {
+		if strings.TrimSpace(value) == "*" {
+			return true
+		}
+	}
+	return false
+}
+
+func corsAllowedOrigin(origin string, allowAnyOrigin bool, allowedOrigins map[string]struct{}) (string, bool) {
+	if allowAnyOrigin {
+		return "*", true
+	}
+	if _, ok := allowedOrigins[origin]; ok {
+		return origin, true
+	}
+	return "", false
 }
 
 func instrumentHandler(logger *logging.Logger, collector *metrics.Collector, endpoint string, next http.Handler) http.Handler {

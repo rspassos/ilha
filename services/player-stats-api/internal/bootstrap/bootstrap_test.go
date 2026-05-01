@@ -374,6 +374,115 @@ func TestNewHTTPServerReturnsProblemJSONForInternalError(t *testing.T) {
 	}
 }
 
+func TestNewHTTPServerAddsCORSHeadersForAllowedOrigin(t *testing.T) {
+	t.Parallel()
+
+	server := newHTTPServer(config.AppConfig{
+		ReadTimeout:        time.Second,
+		WriteTimeout:       time.Second,
+		IdleTimeout:        time.Second,
+		DefaultLimit:       25,
+		MaxLimit:           100,
+		MinimumMatches:     10,
+		CORSAllowedOrigins: []string{"http://localhost:5173"},
+		CORSAllowedMethods: []string{"GET", "OPTIONS"},
+		CORSAllowedHeaders: []string{"Content-Type"},
+	}, logging.New(io.Discard, "player-stats-api"), metrics.New(), httpapi.NewNoopRankingService())
+
+	req := httptest.NewRequest(http.MethodGet, "/v1/rankings/players", nil)
+	req.Header.Set("Origin", "http://localhost:5173")
+	recorder := httptest.NewRecorder()
+
+	server.Handler.ServeHTTP(recorder, req)
+
+	resp := recorder.Result()
+	defer resp.Body.Close()
+
+	if got := resp.Header.Get("Access-Control-Allow-Origin"); got != "http://localhost:5173" {
+		t.Fatalf("access-control-allow-origin = %q, want http://localhost:5173", got)
+	}
+	if got := resp.Header.Get("Access-Control-Allow-Methods"); got != "GET, OPTIONS" {
+		t.Fatalf("access-control-allow-methods = %q, want GET, OPTIONS", got)
+	}
+	if got := resp.Header.Get("Access-Control-Allow-Headers"); got != "Content-Type" {
+		t.Fatalf("access-control-allow-headers = %q, want Content-Type", got)
+	}
+}
+
+func TestNewHTTPServerHandlesCORSPreflightForAllowedOrigin(t *testing.T) {
+	t.Parallel()
+
+	server := newHTTPServer(config.AppConfig{
+		ReadTimeout:        time.Second,
+		WriteTimeout:       time.Second,
+		IdleTimeout:        time.Second,
+		DefaultLimit:       25,
+		MaxLimit:           100,
+		MinimumMatches:     10,
+		CORSAllowedOrigins: []string{"http://localhost:5173"},
+		CORSAllowedMethods: []string{"GET", "OPTIONS"},
+		CORSAllowedHeaders: []string{"Content-Type"},
+	}, logging.New(io.Discard, "player-stats-api"), metrics.New(), httpapi.NewNoopRankingService())
+
+	req := httptest.NewRequest(http.MethodOptions, "/v1/rankings/players", nil)
+	req.Header.Set("Origin", "http://localhost:5173")
+	req.Header.Set("Access-Control-Request-Method", http.MethodGet)
+	req.Header.Set("Access-Control-Request-Headers", "Content-Type")
+	recorder := httptest.NewRecorder()
+
+	server.Handler.ServeHTTP(recorder, req)
+
+	resp := recorder.Result()
+	defer resp.Body.Close()
+
+	if got := resp.StatusCode; got != http.StatusNoContent {
+		t.Fatalf("status = %d, want %d", got, http.StatusNoContent)
+	}
+	if got := resp.Header.Get("Access-Control-Allow-Origin"); got != "http://localhost:5173" {
+		t.Fatalf("access-control-allow-origin = %q, want http://localhost:5173", got)
+	}
+}
+
+func TestNewHTTPServerHandlesWildcardCORSPreflight(t *testing.T) {
+	t.Parallel()
+
+	server := newHTTPServer(config.AppConfig{
+		ReadTimeout:        time.Second,
+		WriteTimeout:       time.Second,
+		IdleTimeout:        time.Second,
+		DefaultLimit:       25,
+		MaxLimit:           100,
+		MinimumMatches:     10,
+		CORSAllowedOrigins: []string{"*"},
+		CORSAllowedMethods: []string{"*"},
+		CORSAllowedHeaders: []string{"*"},
+	}, logging.New(io.Discard, "player-stats-api"), metrics.New(), httpapi.NewNoopRankingService())
+
+	req := httptest.NewRequest(http.MethodOptions, "/v1/rankings/players", nil)
+	req.Header.Set("Origin", "http://localhost:5173")
+	req.Header.Set("Access-Control-Request-Method", http.MethodGet)
+	req.Header.Set("Access-Control-Request-Headers", "Content-Type, Authorization")
+	recorder := httptest.NewRecorder()
+
+	server.Handler.ServeHTTP(recorder, req)
+
+	resp := recorder.Result()
+	defer resp.Body.Close()
+
+	if got := resp.StatusCode; got != http.StatusNoContent {
+		t.Fatalf("status = %d, want %d", got, http.StatusNoContent)
+	}
+	if got := resp.Header.Get("Access-Control-Allow-Origin"); got != "*" {
+		t.Fatalf("access-control-allow-origin = %q, want *", got)
+	}
+	if got := resp.Header.Get("Access-Control-Allow-Methods"); got != http.MethodGet {
+		t.Fatalf("access-control-allow-methods = %q, want %q", got, http.MethodGet)
+	}
+	if got := resp.Header.Get("Access-Control-Allow-Headers"); got != "Content-Type, Authorization" {
+		t.Fatalf("access-control-allow-headers = %q, want %q", got, "Content-Type, Authorization")
+	}
+}
+
 func TestInstrumentHandlerLogsCompletedRequestWithRankingFields(t *testing.T) {
 	t.Parallel()
 

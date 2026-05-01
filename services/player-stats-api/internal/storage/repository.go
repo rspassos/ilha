@@ -214,11 +214,11 @@ WITH aggregated AS (
 		canonical.display_name,
 		COUNT(*)::integer AS matches,
 		ROUND(AVG(stats.efficiency), 2)::double precision AS efficiency,
-		COALESCE(SUM(stats.frags), 0)::integer AS frags,
-		COALESCE(SUM(stats.kills), 0)::integer AS kills,
-		COALESCE(SUM(stats.deaths), 0)::integer AS deaths,
+		ROUND(AVG(stats.frags), 2)::double precision AS frags,
+		ROUND(AVG(stats.kills), 2)::double precision AS kills,
+		ROUND(AVG(stats.deaths), 2)::double precision AS deaths,
 		ROUND(AVG(stats.lg_accuracy), 2)::double precision AS lg_accuracy,
-		COALESCE(SUM(stats.rl_hits), 0)::integer AS rl_hits
+		ROUND(AVG(stats.rl_hits), 2)::double precision AS rl_hits
 	FROM player_match_stats stats
 	JOIN player_canonical canonical ON canonical.id = stats.player_id
 	WHERE %s

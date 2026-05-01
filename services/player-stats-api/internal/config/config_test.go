@@ -21,6 +21,9 @@ func TestLoaderLoadReadsEnvFile(t *testing.T) {
 	t.Setenv("PLAYER_STATS_API_DEFAULT_LIMIT", "")
 	t.Setenv("PLAYER_STATS_API_MAX_LIMIT", "")
 	t.Setenv("PLAYER_STATS_API_MINIMUM_MATCHES", "")
+	t.Setenv("PLAYER_STATS_API_CORS_ALLOWED_ORIGINS", "")
+	t.Setenv("PLAYER_STATS_API_CORS_ALLOWED_METHODS", "")
+	t.Setenv("PLAYER_STATS_API_CORS_ALLOWED_HEADERS", "")
 
 	tempDir := t.TempDir()
 	envPath := filepath.Join(tempDir, ".env")
@@ -38,6 +41,9 @@ PLAYER_STATS_API_SHUTDOWN_TIMEOUT=9s
 PLAYER_STATS_API_DEFAULT_LIMIT=25
 PLAYER_STATS_API_MAX_LIMIT=200
 PLAYER_STATS_API_MINIMUM_MATCHES=12
+PLAYER_STATS_API_CORS_ALLOWED_ORIGINS=http://localhost:5173,https://ilha.dev
+PLAYER_STATS_API_CORS_ALLOWED_METHODS=GET,OPTIONS
+PLAYER_STATS_API_CORS_ALLOWED_HEADERS=Content-Type,Authorization
 `), 0o644); err != nil {
 		t.Fatalf("write env file: %v", err)
 	}
@@ -82,6 +88,38 @@ PLAYER_STATS_API_MINIMUM_MATCHES=12
 	}
 	if cfg.MinimumMatches != 12 {
 		t.Fatalf("MinimumMatches = %d, want 12", cfg.MinimumMatches)
+	}
+	if got, want := strings.Join(cfg.CORSAllowedOrigins, ","), "http://localhost:5173,https://ilha.dev"; got != want {
+		t.Fatalf("CORSAllowedOrigins = %q, want %q", got, want)
+	}
+	if got, want := strings.Join(cfg.CORSAllowedMethods, ","), "GET,OPTIONS"; got != want {
+		t.Fatalf("CORSAllowedMethods = %q, want %q", got, want)
+	}
+	if got, want := strings.Join(cfg.CORSAllowedHeaders, ","), "Content-Type,Authorization"; got != want {
+		t.Fatalf("CORSAllowedHeaders = %q, want %q", got, want)
+	}
+}
+
+func TestLoaderLoadAppliesOpenCORSDefaultsForLocalEnv(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://ilha:ilha@postgres:5432/ilha?sslmode=disable")
+	t.Setenv("APP_ENV", "local")
+	t.Setenv("PLAYER_STATS_API_CORS_ALLOWED_ORIGINS", "")
+	t.Setenv("PLAYER_STATS_API_CORS_ALLOWED_METHODS", "")
+	t.Setenv("PLAYER_STATS_API_CORS_ALLOWED_HEADERS", "")
+
+	cfg, err := NewLoader().Load("")
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if got, want := strings.Join(cfg.CORSAllowedOrigins, ","), "*"; got != want {
+		t.Fatalf("CORSAllowedOrigins = %q, want %q", got, want)
+	}
+	if got, want := strings.Join(cfg.CORSAllowedMethods, ","), "*"; got != want {
+		t.Fatalf("CORSAllowedMethods = %q, want %q", got, want)
+	}
+	if got, want := strings.Join(cfg.CORSAllowedHeaders, ","), "*"; got != want {
+		t.Fatalf("CORSAllowedHeaders = %q, want %q", got, want)
 	}
 }
 
@@ -146,6 +184,32 @@ func TestAppConfigValidateRejectsInvalidValues(t *testing.T) {
 		DefaultLimit:    150,
 		MaxLimit:        100,
 		MinimumMatches:  10,
+	}
+
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("Validate() error = nil, want non-nil")
+	}
+}
+
+func TestAppConfigValidateRejectsInvalidCORSOrigin(t *testing.T) {
+	t.Parallel()
+
+	cfg := AppConfig{
+		AppEnv:             "development",
+		LogLevel:           "info",
+		HTTPAddr:           ":8080",
+		MetricsAddr:        ":9092",
+		DatabaseURL:        "postgres://ilha:ilha@postgres:5432/ilha?sslmode=disable",
+		CORSAllowedOrigins: []string{"localhost:5173"},
+		CORSAllowedMethods: []string{"GET", "OPTIONS"},
+		CORSAllowedHeaders: []string{"Content-Type"},
+		ReadTimeout:        5 * time.Second,
+		WriteTimeout:       10 * time.Second,
+		IdleTimeout:        60 * time.Second,
+		ShutdownTimeout:    5 * time.Second,
+		DefaultLimit:       50,
+		MaxLimit:           100,
+		MinimumMatches:     10,
 	}
 
 	if err := cfg.Validate(); err == nil {

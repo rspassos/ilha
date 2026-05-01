@@ -25,11 +25,11 @@ type PlayerRankingRow struct {
 	DisplayName string  `json:"display_name"`
 	Matches     int     `json:"matches"`
 	Efficiency  float64 `json:"efficiency"`
-	Frags       int     `json:"frags"`
-	Kills       int     `json:"kills"`
-	Deaths      int     `json:"deaths"`
+	Frags       float64 `json:"frags"`
+	Kills       float64 `json:"kills"`
+	Deaths      float64 `json:"deaths"`
 	LGAccuracy  float64 `json:"lg_accuracy"`
-	RLHits      int     `json:"rl_hits"`
+	RLHits      float64 `json:"rl_hits"`
 	Rank        int     `json:"rank"`
 }
 

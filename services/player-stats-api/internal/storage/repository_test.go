@@ -194,8 +194,8 @@ func TestRepositoryListPlayerRankingIntegrationWithoutFilters(t *testing.T) {
 	if page.Data[0].Rank != 1 || page.Data[1].Rank != 2 || page.Data[2].Rank != 3 {
 		t.Fatalf("ranks = [%d %d %d], want [1 2 3]", page.Data[0].Rank, page.Data[1].Rank, page.Data[2].Rank)
 	}
-	if page.Data[0].Frags != 120 {
-		t.Fatalf("Alpha frags = %d, want 120", page.Data[0].Frags)
+	if page.Data[0].Frags != 10 {
+		t.Fatalf("Alpha frags = %v, want 10", page.Data[0].Frags)
 	}
 }
 
@@ -222,6 +222,24 @@ func TestRepositoryListPlayerRankingIntegrationWithCombinedFilters(t *testing.T)
 		LGAccuracy:       43.5,
 		StartPlayedAt:    time.Date(2026, 3, 10, 12, 0, 0, 0, time.UTC),
 		CollectorPrefix:  "filtered-ok",
+		ObservedName:     "Filtered",
+		ExcludedFromRank: false,
+	})
+	insertMatchSeries(t, ctx, pool, matchSeriesSeed{
+		PlayerID:         filteredID,
+		PlayerName:       "Filtered",
+		ServerKey:        "server-a",
+		MapName:          "dm6",
+		Mode:             "2on2",
+		MatchCount:       1,
+		FragsPerMatch:    17,
+		KillsPerMatch:    13,
+		DeathsPerMatch:   5,
+		RLHitsPerMatch:   9,
+		Efficiency:       58.25,
+		LGAccuracy:       43.5,
+		StartPlayedAt:    time.Date(2026, 3, 11, 12, 0, 0, 0, time.UTC),
+		CollectorPrefix:  "filtered-fractional",
 		ObservedName:     "Filtered",
 		ExcludedFromRank: false,
 	})
@@ -358,20 +376,20 @@ func TestRepositoryListPlayerRankingIntegrationWithCombinedFilters(t *testing.T)
 	if row.DisplayName != "Filtered" {
 		t.Fatalf("display_name = %q, want Filtered", row.DisplayName)
 	}
-	if row.Matches != 10 {
-		t.Fatalf("matches = %d, want 10", row.Matches)
+	if row.Matches != 11 {
+		t.Fatalf("matches = %d, want 11", row.Matches)
 	}
-	if row.Frags != 110 {
-		t.Fatalf("frags = %d, want 110", row.Frags)
+	if row.Frags != 11.55 {
+		t.Fatalf("frags = %v, want 11.55", row.Frags)
 	}
-	if row.Kills != 90 {
-		t.Fatalf("kills = %d, want 90", row.Kills)
+	if row.Kills != 9.36 {
+		t.Fatalf("kills = %v, want 9.36", row.Kills)
 	}
-	if row.Deaths != 70 {
-		t.Fatalf("deaths = %d, want 70", row.Deaths)
+	if row.Deaths != 6.82 {
+		t.Fatalf("deaths = %v, want 6.82", row.Deaths)
 	}
-	if row.RLHits != 40 {
-		t.Fatalf("rl_hits = %d, want 40", row.RLHits)
+	if row.RLHits != 4.45 {
+		t.Fatalf("rl_hits = %v, want 4.45", row.RLHits)
 	}
 	if row.Efficiency != 58.25 {
 		t.Fatalf("efficiency = %v, want 58.25", row.Efficiency)
