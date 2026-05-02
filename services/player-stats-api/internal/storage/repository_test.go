@@ -48,6 +48,33 @@ func TestBuildOrderByClauseRejectsUnsupportedSortDirection(t *testing.T) {
 	}
 }
 
+func TestParsePlayerName(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{name: "keeps regular ascii untouched", input: "sr.mihawk", want: "sr.mihawk"},
+		{name: "maps literal unicode escape", input: `Matuza\u00e1`, want: "Matuzaa"},
+		{name: "maps decoded json unicode rune", input: "Matuza\u00e1", want: "Matuzaa"},
+		{name: "maps quake dot", input: `dot\u0000name`, want: "dot•name"},
+		{name: "maps high punctuation", input: "a\u008c\u008db", want: "a>>b"},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := parsePlayerName(tc.input); got != tc.want {
+				t.Fatalf("parsePlayerName(%q) = %q, want %q", tc.input, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestRepositoryListPlayerRankingRequiresRepository(t *testing.T) {
 	t.Parallel()
 

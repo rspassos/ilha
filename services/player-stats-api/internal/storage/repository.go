@@ -85,6 +85,7 @@ func (r *Repository) ListPlayerRanking(ctx context.Context, query model.RankingQ
 		); err != nil {
 			return model.RankingPage{}, fmt.Errorf("scan player ranking row: %w", err)
 		}
+		row.DisplayName = parsePlayerName(row.DisplayName)
 		result = append(result, row)
 	}
 	if err := rows.Err(); err != nil {
